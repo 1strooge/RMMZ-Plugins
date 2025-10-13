@@ -6,9 +6,9 @@
  * @target MZ
  * @plugindesc v1.5(EN) – Basic customization of core RPG Maker MZ features
  * @author 1strooge
+ * @url https://raw.githubusercontent.com/1strooge/RMMZ-Plugins/main/1strooge_BasicCustomization.js
  * @contact https://forums.rpgmakerweb.com/index.php?members/rooge.85756/
- * @license CC BY-NC 4.0
- * @url https://creativecommons.org/licenses/by-nc/4.0/
+ * @version 1.5.1
  *
  * @param disableCursorBlink
  * @text Disable Cursor Blink
@@ -228,16 +228,19 @@
  *           • Optional immunity via <noDMA> and <noEDMA> notetags
  *           • Works with “Disable Floor Damage Flash” = true
  *           • Includes animation delay control
+ * v1.5.1 - License changed from CC BY-NC 4.0 to CC BY-SA 4.0
  * 
  * ============================================================================
-  * License
+ * © 1strooge 2025
  * ============================================================================
- * © 1strooge 2025 
  * 1strooge_BasicCustomization.js – Version 1.5 (EN)
  * Author: 1strooge
  * Contact: https://forums.rpgmakerweb.com/index.php?members/rooge.85756/
- * License: CC BY-NC 4.0  (https://creativecommons.org/licenses/by-nc/4.0/)
- * Recommended RPG Maker MZ version: 1.9.1+ (minimum 1.6.2)
+ * ----------------------------------------------------------------------------
+ * Note:
+ * Recommended RPG Maker MZ version: 1.9.1+ (minimum 1.6.2) *
+ * ============================================================================
+ * License: CC BY-SA 4.0  (https://creativecommons.org/licenses/by-sa/4.0/)
  * ============================================================================
  */
 
