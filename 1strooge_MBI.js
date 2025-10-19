@@ -1,10 +1,10 @@
 /*:
  * @target MZ
- * @plugindesc [v1.3.6] Shows up to 4 state/buff icons with turn counters above each actor (default battle layout only).
+ * @plugindesc [v1.3.7] Shows up to 4 state/buff icons with turn counters above each actor (default battle layout only).
  * @author 1strooge
  * @url https://github.com/1strooge/RMMZ-Plugins
  * @license CC BY-SA 4.0
- * @version 1.3.6
+ * @version 1.3.7
  *
  * @help
  * =========================================================================
@@ -24,15 +24,16 @@
  * - Affects only the battle status window.
  * - Does not modify menu or field layouts.
  * - Inspired by the NUUN_StateIconSideBySide plugin by NUUN (MIT).
- * - This plugin is an independent and simplified implementation written 
- *   from scratch (1strooge_MBI is primarily intended as plug&play).
+ * - This plugin je an independent and simplified implementation written 
+ * from scratch (1strooge_MBI is primarily intended as plug&play).
  *
  * =========================================================================
- * 🧱 NEW in v1.3.6
+ * 🧱 NEW in v1.3.7
  * ========================================================================= 
- * - Final stable version based on v1.3.5b. 
- * - Fixed 4 icons; correct OFFSET logic.
- * 
+ * - CRITICAL FIX: Icon Cycling/Pagination.
+ *   Overrides Sprite_StateIcon.prototype.update to ensure the internal
+ *   frame counter (`this._animationIndex`) is correctly incremented,
+ *   allowing for cycling through pages of icons when more than 4 are active.
  * =========================================================================
  * ⚙️ Parameters
  * =========================================================================
@@ -53,7 +54,7 @@
  * @min 10
  * @max 120
  * @default 40
- * @desc Number of frames before switching to the next page of icons.
+ * @desc Number of frames before switching to the next page of icons (min = 10 / max = 120).
  *
  * @param OffsetX
  * @text Offset X
@@ -70,13 +71,11 @@
  * @max 32
  * @default 0
  * @desc Vertical offset for the icon block (0 = auto-calibrated to -4 internally).
- * 
- * =========================================================================
+ * * =========================================================================
  * @cs-CZ
  *
- * @plugindesc [v1.3.6] Zobrazuje 4 ikony stavů/buffů s počítadly tahů nad každou postavou party (pouze pro výchozí rozvržení bitvy RPG MAKER MZ).
- *  
- * @help
+ * @plugindesc [v1.3.7] Zobrazuje 4 ikony stavů/buffů s počítadly tahů nad každou postavou party (pouze pro výchozí rozvržení bitvy RPG MAKER MZ).
+ * * @help
  * =========================================================================
  * 🧩 Popis
  * =========================================================================
@@ -97,14 +96,15 @@
  * - Nemění rozvržení žádných menu a oken.
  * - Inspirováno pluginem NUUN_StateIconSideBySide od NUUN (MIT).
  * - Tento plugin je nezávislá a zjednodušená implementace napsaná od nuly
- *   (1strooge_MBI je primárně určen jako plug&play).
+ * (1strooge_MBI je primárně určen jako plug&play).
  *
  * =========================================================================
- * 🧱 NOVĚ ve v1.3.6
+ * 🧱 NOVĚ ve v1.3.7
  * ========================================================================= 
- * - Finální a stabilní verze založená na v1.3.5b. 
- * - Blok omezen na 4 ikony; správná logika OFFSET.
- *  
+ * - KRITICKÁ OPRAVA: Cyklování Ikon.
+ *   Přepisuje Sprite_StateIcon.prototype.update, aby zajistil správné  
+ *   navyšování interního čítače snímků (`this._animationIndex`), což 
+ *   umožňuje cyklení stránek ikon, pokud jich je aktivních více než 4.
  * =========================================================================
  * ⚙️ Parametry
  * =========================================================================
@@ -117,15 +117,15 @@
  *
  * Offset Y:
  * V případě potřeby můžete blok ikon přesunout svisle.
- * 
  *
+ * 
  * @param FrameWait
  * @text Frame Wait
  * @type number
  * @min 10
  * @max 120
  * @default 40
- * @desc Počet snímků (frames) před přepnutím na další stránku ikon.
+ * @desc Počet snímků (frames) před přepnutím na další stránku ikon (min = 10 / max = 120).
  *
  * @param OffsetX
  * @text Offset X
@@ -157,7 +157,6 @@
   const rawOffsetX = Number(params["OffsetX"]);
   const rawOffsetY = Number(params["OffsetY"]);
   
-  // Nyní nastavuje OFFSET_X/Y pouze pokud je parametr 0, jinak použije hodnotu z parametru
   const OFFSET_X   = rawOffsetX; 
   const OFFSET_Y   = rawOffsetY === 0 ? -4  : rawOffsetY; 
 
@@ -170,6 +169,20 @@
     this._iconCols     = MAX_ICONS;
     this._waitDuration = FRAME_WAIT;
     this._iconIndexArray = [];
+    // this._animationIndex je inicializováno voláním _SSI_initMembers (super)
+  };
+
+  // 💡 NOVÝ KÓD: Zajišťuje, že čítač snímků (frames) je inkrementován
+  Sprite_StateIcon.prototype.update = function() {
+    // 1. Zavolá základní aktualizaci Spritu
+    Sprite.prototype.update.call(this); 
+    
+    // 2. Inkrementuje čítač animace (KLÍČOVÉ pro cyklování stránek)
+    this._animationIndex++; 
+    
+    // 3. Spustí mou vlastní logiku
+    this.updateIcon();
+    this.updateFrame();
   };
 
   Sprite_StateIcon.prototype.updateIcon = function() {
@@ -207,7 +220,11 @@
 
     const page  = Math.floor(this._animationIndex / this._waitDuration);
     const pageCount = Math.ceil(iconsArr.length / this._iconCols);
-    if (page >= pageCount) { this._animationIndex = 0; return; }
+    if (page >= pageCount) { 
+        this._animationIndex = 0; 
+        // V tomto bodě se sprite nevrací, pouze se index resetuje a cyklus pokračuje
+        // Není potřeba 'return;', aby se vykreslila alespoň první stránka
+    }
 
     const start = page * this._iconCols;
     const current = iconsArr.slice(start, start + this._iconCols);
@@ -248,10 +265,8 @@
   // Window_BattleStatus – FIX: Aggressive Centering Logic
   // =========================================================================
   
-  // Pomocná funkce pro vytvoření/aktualizaci pozice ikony
   const refreshIconPosition = function(win, actor) {
       const key = `actor${actor.index()}-stateIcon`;
-      // Najde existující sprite, aby se nevytvářeli duplikáty
       let sprite = win._innerChildren.find(c => c._battler === actor && c.constructor === Sprite_StateIcon);
       if (!sprite) {
           sprite = win.createInnerSprite(key, Sprite_StateIcon);
@@ -260,10 +275,8 @@
       
       const rect  = win.itemRect(actor.index());
       
-      // Pozice Y: Stejná jako dříve, posunutá nad status
       const baseY = Math.floor(rect.y + win.lineHeight() * 0.6 + OFFSET_Y);
       
-      // Pozice X: Centrování bloku do středu celého sloupce (rect)
       const centerX = rect.x + rect.width / 2;
       const baseX = Math.floor(centerX + OFFSET_X);
       
@@ -272,9 +285,6 @@
       sprite.visible = true;
   };
   
-  // 💡 KLÍČOVÝ FIX: Navázání na drawItemStatus
-  // Funkce se volá pro vykreslení stavů/HP/MP/TP v každém sloupci a je volána 
-  // v optimální chvíli: po umístění sloupce, ale před zamrznutím/překreslením.
   const _WBS_drawItemStatus = Window_BattleStatus.prototype.drawItemStatus;
   Window_BattleStatus.prototype.drawItemStatus = function(index) {
       _WBS_drawItemStatus.call(this, index);
@@ -283,10 +293,4 @@
           refreshIconPosition(this, actor);
       }
   };
-  
-  // Zrušena standardní aktualizace v update(), protože nyní se spolivé drawItemStatus.
-  // Ponechán pouze původní update() volání, aby se správně aktualizovaly cyklické ikony (updateFrame).
-  
-  // Původní `_WBS_update` není potřeba přepisovat, stačí se spoléhat na Engine.
-
 })();
