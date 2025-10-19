@@ -25,7 +25,7 @@
  * - Does not modify menu or field layouts.
  * - Inspired by the NUUN_StateIconSideBySide plugin by NUUN (MIT).
  * - This plugin je an independent and simplified implementation written 
- * from scratch (1strooge_MBI is primarily intended as plug&play).
+ *   from scratch (1strooge_MBI is primarily intended as plug&play).
  *
  * =========================================================================
  * 🧱 NEW in v1.3.7
